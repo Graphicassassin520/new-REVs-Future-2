@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timeshare Sales Tracker</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #ffffff;
+            --card-bg: #1f1f1f;
+            --accent-color: #ff0000; /* Neon red */
+            --secondary-accent: #ff4081; /* Pink for buttons */
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('circuit.png');
+            background-size: cover;
+            opacity: 0.1;
+            z-index: -1;
+            animation: circuitAnimation 60s linear infinite;
+        }
+        @keyframes circuitAnimation {
+            0% { background-position: 0 0; }
+            100% { background-position: 1000px 1000px; }
+        }
+        nav {
+            background-color: var(--card-bg);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+        nav .logo img {
+            height: 50px;
+        }
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+        }
+        nav ul li {
+            margin-right: 20px;
+        }
+        nav ul li a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+        }
+        nav ul li a:hover, nav ul li a.active {
+            color: #ff6666;
+            text-shadow: 0 0 5px #ff0000;
+        }
+        main {
+            margin-top: 70px;
+            padding: 20px;
+            position: relative;
+        }
+        #notifications {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            background-color: var(--secondary-accent);
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+            z-index: 999;
+        }
+        #notifications.active {
+            transform: translateY(0);
+        }
+        .section {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 15px var(--accent-color);
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            max-width: 300px;
+            margin-bottom: 20px;
+        }
+        form label {
+            margin-top: 10px;
+        }
+        form input, form select {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--accent-color);
+            padding: 5px;
+            border-radius: 5px;
+            transition: border-color 0.3s ease;
+        }
+        form input:focus, form select:focus {
+            border-color: #ff6666;
+            outline: none;
+        }
+        form button {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        form button:hover {
+            background-color: #cc0000;
+            box-shadow: 0 0 10px #ff0000;
+        }
+        .kanban-board {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        .column {
+            background-color: var(--card-bg);
+            padding: 10px;
+            border-radius: 10px;
+            width: 30%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: box-shadow 0.3s ease;
+        }
+        .column:hover {
+            box-shadow: 0 0 15px var(--accent-color);
+        }
+        .tasks {
+            min-height: 100px;
+        }
+        .task-card {
+            background-color: var(--card-bg);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            cursor: grab;
+            transition: box-shadow 0.3s ease;
+        }
+        .task-card:hover {
+            box-shadow: 0 0 10px #ff0000;
+        }
+        .task-card:active {
+            cursor: grabbing;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        ul li {
+            background-color: var(--card-bg);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        ul button {
+            background-color: var(--secondary-accent);
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            margin-left: 5px;
+        }
+        ul button:hover {
+            background-color: #c51162;
+            box-shadow: 0 0 10px var(--secondary-accent);
+        }
+        #taskSearch, #saleSearch, #customerSearch {
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 10px;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--accent-color);
+            padding: 5px;
+            border-radius: 5px;
+        }
+        canvas {
+            max-height: 300px;
+            width: 100%;
+        }
+        @media (max-width: 768px) {
+            nav .logo img {
+                height: 40px;
+            }
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .kanban-board {
+                flex-direction: column;
+            }
+            .column {
+                width: 100%;
+                margin-bottom: 20px;
+            }
+            canvas {
+                max-height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation"></div>
+    <nav>
+        <div class="logo">
+            <a href="#dashboard"><img src="logo.png" alt="real ESTATE VACATION STORE Logo"></a>
+        </div>
+        <ul>
+            <li><a href="#dashboard">Dashboard</a></li>
+            <li><a href="#tasks">Tasks</a></li>
+            <li><a href="#sales">Sales</a></li>
+            <li><a href="#customers">Customers</a></li>
+            <li><a href="#settings">Settings</a></li>
+        </ul>
+    </nav>
+    <main>
+        <div id="notifications"></div>
+        <section id="dashboard" class="section">
+            <h2>Dashboard</h2>
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>Today's Sales</h3>
+                    <p id="todaySales">$0</p>
+                </div>
+                <div class="card">
+                    <h3>Pending Tasks</h3>
+                    <p id="pendingTasks">0</p>
+                </div>
+                <div class="card">
+                    <canvas id="salesChart"></canvas>
+                </div>
+                <div class="card">
+                    <canvas id="taskChart"></canvas>
+                </div>
+            </div>
+        </section>
+        <section id="tasks" class="section">
+            <h2>Tasks</h2>
+            <input type="text" id="taskSearch" placeholder="Search tasks...">
+            <form id="taskForm">
+                <label for="taskDesc">Description:</label>
+                <input type="text" id="taskDesc" required>
+                <label for="taskDue">Due Date:</label>
+                <input type="date" id="taskDue" required>
+                <label for="taskPriority">Priority:</label>
+                <select id="taskPriority">
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                </select>
+                <label for="taskCustomer">Customer:</label>
+                <select id="taskCustomer">
+                    <option value="">No Customer</option>
+                    <!-- Populated via JavaScript -->
+                </select>
+                <button type="submit">Add Task</button>
+            </form>
+            <div class="kanban-board">
+                <div class="column" id="to-do">
+                    <h3>To Do</h3>
+                    <div class="tasks"></div>
+                </div>
+                <div class="column" id="in-progress">
+                    <h3>In Progress</h3>
+                    <div class="tasks"></div>
+                </div>
+                <div class="column" id="completed">
+                    <h3>Completed</h3>
+                    <div class="tasks"></div>
+                </div>
+            </div>
+        </section>
+        <section id="sales" class="section">
+            <h2>Sales</h2>
+            <input type="text" id="saleSearch" placeholder="Search sales...">
+            <form id="saleForm">
+                <label for="clientName">Client Name:</label>
+                <input type="text" id="clientName" required>
+                <label for="saleAmount">Amount:</label>
+                <input type="number" id="saleAmount" step="0.01" required>
+                <label for="saleDate">Date:</label>
+                <input type="date" id="saleDate" required>
+                <label for="saleCustomer">Customer:</label>
+                <select id="saleCustomer">
+                    <option value="">No Customer</option>
+                    <!-- Populated via JavaScript -->
+                </select>
+                <button type="submit">Add Sale</button>
+            </form>
+            <ul id="saleList"></ul>
+        </section>
+        <section id="customers" class="section">
+            <h2>Customers</h2>
+            <input type="text" id="customerSearch" placeholder="Search customers...">
+            <form id="customerForm">
+                <label for="customerName">Name:</label>
+                <input type="text" id="customerName" required>
+                <label for="customerEmail">Email:</label>
+                <input type="email" id="customerEmail" required>
+                <label for="customerPhone">Phone:</label>
+                <input type="tel" id="customerPhone" required>
+                <button type="submit">Add Customer</button>
+            </form>
+            <ul id="customerList"></ul>
+        </section>
+        <section id="settings" class="section">
+            <h2>Settings</h2>
+            <div>
+                <label for="theme">Theme:</label>
+                <select id="theme">
+                    <option value="dark">Dark</option>
+                    <option value="light">Light</option>
+                </select>
+            </div>
+        </section>
+    </main>
+    <script>
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        let sales = JSON.parse(localStorage.getItem('sales')) || [];
+        let customers = JSON.parse(localStorage.getItem('customers')) || [];
+        let salesChart;
+        let taskChart;
+
+        function saveTasks() { localStorage.setItem('tasks', JSON.stringify(tasks)); }
+        function saveSales() { localStorage.setItem('sales', JSON.stringify(sales)); }
+        function saveCustomers() { localStorage.setItem('customers', JSON.stringify(customers)); }
+
+        function getToday() { return new Date().toISOString().split('T')[0]; }
+
+        function renderDashboard() {
+            const today = getToday();
+            const todaySales = sales.filter(s => s.date === today).reduce((sum, s) => sum + parseFloat(s.amount), 0);
+            document.getElementById('todaySales').textContent = `$${todaySales.toFixed(2)}`;
+            const pendingTasks = tasks.filter(t => t.status !== 'completed').length;
+            document.getElementById('pendingTasks').textContent = pendingTasks;
+
+            const pastWeekDates = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                pastWeekDates.push(d.toISOString().split('T')[0]);
+            }
+            const salesData = pastWeekDates.map(date => 
+                sales.filter(s => s.date === date).reduce((sum, s) => sum + parseFloat(s.amount), 0)
+            );
+            if (!salesChart) {
+                salesChart = new Chart(document.getElementById('salesChart'), {
+                    type: 'line',
+                    data: {
+                        labels: pastWeekDates,
+                        datasets: [{ label: 'Sales', data: salesData, borderColor: '#ff0000', backgroundColor: 'rgba(255,0,0,0.2)' }]
+                    },
+                    options: { scales: { y: { beginAtZero: true } } }
+                });
+            } else {
+                salesChart.data.labels = pastWeekDates;
+                salesChart.data.datasets[0].data = salesData;
+                salesChart.update();
+            }
+
+            const taskCounts = ['to do', 'in progress', 'completed'].map(status => 
+                tasks.filter(t => t.status === status).length
+            );
+            if (!taskChart) {
+                taskChart = new Chart(document.getElementById('taskChart'), {
+                    type: 'pie',
+                    data: {
+                        labels: ['To Do', 'In Progress', 'Completed'],
+                        datasets: [{ data: taskCounts, backgroundColor: ['#ff4081', '#ff0000', '#4caf50'] }]
+                    }
+                });
+            } else {
+                taskChart.data.datasets[0].data = taskCounts;
+                taskChart.update();
+            }
+            checkNotifications();
+        }
+
+        function renderTasks(filter = '') {
+            const filtered = filter ? tasks.filter(t => t.description.toLowerCase().includes(filter.toLowerCase())) : tasks;
+            const columns = {
+                'to do': document.querySelector('#to-do .tasks'),
+                'in progress': document.querySelector('#in-progress .tasks'),
+                'completed': document.querySelector('#completed .tasks')
+            };
+            for (let status in columns) { columns[status].innerHTML = ''; }
+            filtered.forEach(task => {
+                const customer = customers.find(c => c.id == task.customerId);
+                const card = document.createElement('div');
+                card.className = 'task-card';
+                card.draggable = true;
+                card.innerHTML = `
+                    <div>${task.description} - Due: ${task.dueDate} - Priority: ${task.priority} - Customer: ${customer ? customer.name : 'N/A'}</div>
+                    <button>Edit</button><button>Delete</button>
+                `;
+                const [editBtn, deleteBtn] = card.querySelectorAll('button');
+                editBtn.addEventListener('click', () => editTask(task.id));
+                deleteBtn.addEventListener('click', () => deleteTask(task.id));
+                card.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', task.id));
+                columns[task.status].appendChild(card);
+            });
+            for (let status in columns) {
+                columns[status].parentElement.addEventListener('dragover', e => e.preventDefault());
+                columns[status].parentElement.addEventListener('drop', e => {
+                    e.preventDefault();
+                    const id = e.dataTransfer.getData('text/plain');
+                    const task = tasks.find(t => t.id == id);
+                    if (task) {
+                        task.status = status;
+                        saveTasks();
+                        renderTasks(filter);
+                    }
+                });
+            }
+        }
+
+        function editTask(id) {
+            const task = tasks.find(t => t.id == id);
+            if (task) {
+                const desc = prompt('Edit description:', task.description);
+                const due = prompt('Edit due date:', task.dueDate);
+                const priority = prompt('Edit priority (low, medium, high):', task.priority);
+                if (desc && due && priority) {
+                    task.description = desc;
+                    task.dueDate = due;
+                    task.priority = priority;
+                    saveTasks();
+                    renderTasks();
+                    renderDashboard();
+                }
+            }
+        }
+
+        function deleteTask(id) {
+            if (confirm('Are you sure you want to delete this task?')) {
+                tasks = tasks.filter(t => t.id != id);
+                saveTasks();
+                renderTasks();
+                renderDashboard();
+            }
+        }
+
+        function renderSales(filter = '') {
+            const filtered = filter ? sales.filter(s => s.clientName.toLowerCase().includes(filter.toLowerCase())) : sales;
+            const list = document.getElementById('saleList');
+            list.innerHTML = '';
+            filtered.forEach(sale => {
+                const customer = customers.find(c => c.id == sale.customerId);
+                const li = document.createElement('li');
+                li.innerHTML = `${sale.clientName} - $${sale.amount} - ${sale.date} - Customer: ${customer ? customer.name : 'N/A'} <button>Edit</button><button>Delete</button>`;
+                const [editBtn, deleteBtn] = li.querySelectorAll('button');
+                editBtn.addEventListener('click', () => editSale(sale.id));
+                deleteBtn.addEventListener('click', () => deleteSale(sale.id));
+                list.appendChild(li);
+            });
+        }
+
+        function editSale(id) {
+            const sale = sales.find(s => s.id == id);
+            if (sale) {
+                const name = prompt('Edit client name:', sale.clientName);
+                const amount = prompt('Edit amount:', sale.amount);
+                const date = prompt('Edit date:', sale.date);
+                if (name && amount && date) {
+                    sale.clientName = name;
+                    sale.amount = amount;
+                    sale.date = date;
+                    saveSales();
+                    renderSales();
+                    renderDashboard();
+                }
+            }
+        }
+
+        function deleteSale(id) {
+            if (confirm('Are you sure you want to delete this sale?')) {
+                sales = sales.filter(s => s.id != id);
+                saveSales();
+                renderSales();
+                renderDashboard();
+            }
+        }
+
+        function renderCustomers(filter = '') {
+            const filtered = filter ? customers.filter(c => c.name.toLowerCase().includes(filter.toLowerCase())) : customers;
+            const list = document.getElementById('customerList');
+            list.innerHTML = '';
+            filtered.forEach(customer => {
+                const li = document.createElement('li');
+                li.innerHTML = `${customer.name} - ${customer.email} - ${customer.phone} <button>Edit</button><button>Delete</button>`;
+                const [editBtn, deleteBtn] = li.querySelectorAll('button');
+                editBtn.addEventListener('click', () => editCustomer(customer.id));
+                deleteBtn.addEventListener('click', () => deleteCustomer(customer.id));
+                list.appendChild(li);
+            });
+        }
+
+        function editCustomer(id) {
+            const customer = customers.find(c => c.id == id);
+            if (customer) {
+                const name = prompt('Edit name:', customer.name);
+                const email = prompt('Edit email:', customer.email);
+                const phone = prompt('Edit phone:', customer.phone);
+                if (name && email && phone) {
+                    customer.name = name;
+                    customer.email = email;
+                    customer.phone = phone;
+                    saveCustomers();
+                    renderCustomers();
+                }
+            }
+        }
+
+        function deleteCustomer(id) {
+            if (confirm('Are you sure you want to delete this customer?')) {
+                customers = customers.filter(c => c.id != id);
+                saveCustomers();
+                renderCustomers();
+            }
+        }
+
+        function checkNotifications() {
+            const today = getToday();
+            const overdue = tasks.filter(t => t.dueDate < today && t.status !== 'completed').length;
+            const dueToday = tasks.filter(t => t.dueDate === today && t.status !== 'completed').length;
+            const notification = document.getElementById('notifications');
+            let message = '';
+            if (overdue) message += `You have ${overdue} overdue tasks. `;
+            if (dueToday) message += `You have ${dueToday} tasks due today.`;
+            if (message) {
+                notification.textContent = message;
+                notification.classList.add('active');
+            } else {
+                notification.classList.remove('active');
+            }
+        }
+
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if (id === 'dashboard') renderDashboard();
+            else if (id === 'tasks') renderTasks();
+            else if (id === 'sales') renderSales();
+            else if (id === 'customers') renderCustomers();
+        }
+
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                showSection(link.getAttribute('href').substring(1));
+            });
+        });
+
+        document.getElementById('taskForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const task = {
+                id: Date.now(),
+                description: document.getElementById('taskDesc').value,
+                dueDate: document.getElementById('taskDue').value,
+                priority: document.getElementById('taskPriority').value,
+                status: 'to do',
+                customerId: document.getElementById('taskCustomer').value || null
+            };
+            tasks.push(task);
+            saveTasks();
+            renderTasks();
+            e.target.reset();
+        });
+
+        document.getElementById('saleForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const sale = {
+                id: Date.now(),
+                clientName: document.getElementById('clientName').value,
+                amount: document.getElementById('saleAmount').value,
+                date: document.getElementById('saleDate').value,
+                customerId: document.getElementById('saleCustomer').value || null
+            };
+            sales.push(sale);
+            saveSales();
+            const followUpDate = new Date(sale.date);
+            followUpDate.setDate(followUpDate.getDate() + 7);
+            tasks.push({
+                id: Date.now() + 1,
+                description: `Follow up with ${sale.clientName}`,
+                dueDate: followUpDate.toISOString().split('T')[0],
+                priority: 'medium',
+                status: 'to do',
+                customerId: sale.customerId
+            });
+            saveTasks();
+            renderSales();
+            renderTasks();
+            e.target.reset();
+        });
+
+        document.getElementById('customerForm').addEventListener('submit', e => {
+            e.preventDefault();
+            const customer = {
+                id: Date.now(),
+                name: document.getElementById('customerName').value,
+                email: document.getElementById('customerEmail').value,
+                phone: document.getElementById('customerPhone').value
+            };
+            customers.push(customer);
+            saveCustomers();
+            renderCustomers();
+            updateCustomerSelects();
+            e.target.reset();
+        });
+
+        function updateCustomerSelects() {
+            const selects = [document.getElementById('taskCustomer'), document.getElementById('saleCustomer')];
+            selects.forEach(select => {
+                select.innerHTML = '<option value="">No Customer</option>' + 
+                    customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            });
+        }
+
+        updateCustomerSelects();
+        showSection('dashboard');
+    </script>
+</body>
+</html>
